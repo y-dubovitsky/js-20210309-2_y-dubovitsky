@@ -5,8 +5,7 @@
  * @returns {object} - returns the new object
  */
 export const pick = (obj, ...fields) => {
-    let result = {};
-    result = Object.fromEntries(
+    const result = Object.fromEntries(
         Object
             .entries(obj)
             .filter(

@@ -6,14 +6,29 @@
  */
 export function sortStrings(arr, param = 'asc') {
     let result = new Array(...arr);
-    result = result.sort(
-        (a, b) => compareViaLocales(a, b, ['ru', 'en'])
-    );
 
-    return param === 'asc' ? result : result.reverse();
+    switch(param) {
+        case 'asc' : {
+            result = result.sort(
+                (a, b) => compareViaIntlCollarator(a, b, ['ru', 'en'])
+            );
+            break;
+        }
+        case 'desc' : {
+            result = result.sort(
+                (a, b) => compareViaStringComparator(a, b, ['ru', 'en'], -1)
+            );
+            break;
+        }
+        default : {
+            result;
+        }
+    }
+
+    return result;
 }
 
-function compareViaLocales(a, b, locales) {
+function compareViaIntlCollarator(a, b, locales, direction = 1) {
     const collator = new Intl.Collator(
         [
             ...locales
@@ -24,5 +39,9 @@ function compareViaLocales(a, b, locales) {
         }
     );
 
-    return collator.compare(a, b);
+    return collator.compare(a, b) * direction;
+}
+
+function compareViaStringComparator(a, b, locales, direction = 1) {
+    return direction * a.localeCompare(b, [...locales], {sensitivity: 'variant', caseFirst: 'upper'});
 }
