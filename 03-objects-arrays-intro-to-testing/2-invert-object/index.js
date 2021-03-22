@@ -3,15 +3,24 @@
  * @param {object} obj - the initial object
  * @returns {object | undefined} - returns new object or undefined if nothing did't pass
  */
-function invertObj(obj) {
-    let a = {}
-    Object.entries(obj).reduce((prev, curr) => {
-        console.log(a[cur[0]]);
-    }, a)
+export function invertObj(obj) {
+
+    if (obj === undefined) return undefined;
+
+    return Object.fromEntries(
+        Object
+            .entries(obj)
+            .reduce(
+                (prev, cur) => {
+                    const swapped = swapArrItem(cur);
+                    prev.push(swapped);
+                    return prev;
+                }, []
+            )
+    );
+
+    function swapArrItem(arr) { //TODO Make refactoring
+        return ([arr[1], arr[0]]);
+    }
 }
 
-invertObj({
-    a: '1',
-    b: '2',
-    c: '3'
-});

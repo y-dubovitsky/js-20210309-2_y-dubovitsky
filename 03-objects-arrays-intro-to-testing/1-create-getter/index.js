@@ -5,9 +5,9 @@
  */
 export function createGetter(path) {
     const array = path.split('.');
-    let result = '';
+    let result = ''; //TODO Need improve!
 
-    return function getEndpointPathValue(object) {
+    return function getValueOfPathEndpoint(object) {
 
         outer: for (let i = 0; i < array.length; i++) {
             let shifted = array.shift();
@@ -20,7 +20,7 @@ export function createGetter(path) {
                     break outer;
                 }
                 case ('object'): {
-                    getEndpointPathValue(object[shifted]);
+                    getValueOfPathEndpoint(object[shifted]);
                     break;
                 }
                 default: {
