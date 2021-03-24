@@ -1,25 +1,32 @@
 export default class ColumnChart {
 
   constructor(object = {}) {
-      this.data = object.data;
-      this.label = object.label;
-      this.link = object.link;
-      this.value = object.value;
-      this.chartHeight = 50;
-      this.render();
+    this.data = object.data;
+    this.label = object.label;
+    this.link = object.link;
+    this.value = object.value;
+    this.chartHeight = 50;
+    this.render();
   }
 
   update = (newData) => {
     this.data = newData;
     const columnChartChart = this.element.querySelector('.column-chart__chart');
-    columnChartChart.innerHTML = this.createBody();
+    columnChartChart.innerHTML = this.createColumnChart();
   }
 
-  createBody = () => {
-    if(!this.data || this.data.length === 0) return `<img src="./charts-skeleton.svg">`
-    return this.data.reduce((prev, cur) => {
-      return prev + `<div style="--value: ${cur}" data-tooltip="${cur}%"></div>`
+  createColumnChart = () => {
+
+    if (!this.data || this.data.length === 0) return `<img src="./charts-skeleton.svg">`
+
+    return this.data.reduce((prev, cur) => { //TODO Вынести вычисления в отдельный метод
+      return prev +
+        `<div
+            style="--value: ${Math.floor(cur * 50 / Math.max(...this.data))}" 
+            data-tooltip="${(cur / Math.max(...this.data) * 100).toFixed(0)}%"
+       ></div>`
     }, ``)
+
   }
 
   render() {
@@ -34,7 +41,7 @@ export default class ColumnChart {
           <div class="column-chart__container">
             <div data-element="header" class="column-chart__header">${this.value}</div>
             <div data-element="body" class="column-chart__chart">
-              ${this.createBody()}
+              ${this.createColumnChart()}
             </div>
           </div>
         </div>
