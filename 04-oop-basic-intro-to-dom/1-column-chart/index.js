@@ -19,15 +19,18 @@ export default class ColumnChart {
 
     if (!this.data || this.data.length === 0) return `<img src="./charts-skeleton.svg">`
 
-    return this.data.reduce((prev, cur) => { //TODO Вынести вычисления в отдельный метод
+    const maxDataValue = Math.max(...this.data);
+
+    return this.data.reduce((prev, cur) => { //TODO Вынести вычисления в отдельный метод?
       return prev +
         `<div
-            style="--value: ${Math.floor(cur * 50 / Math.max(...this.data))}" 
-            data-tooltip="${(cur / Math.max(...this.data) * 100).toFixed(0)}%"
+            style="--value: ${Math.floor(cur * 50 / maxDataValue)}" 
+            data-tooltip="${(cur / maxDataValue * 100).toFixed(0)}%"
        ></div>`
     }, ``)
 
   }
+
 
   render() {
     const element = document.createElement('div');
