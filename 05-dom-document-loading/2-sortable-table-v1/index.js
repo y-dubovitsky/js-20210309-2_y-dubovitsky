@@ -3,9 +3,11 @@ export default class SortableTable {
   constructor(
     header = [],
     { data } = [],
+    compareViaIntlCollarator = {}
   ) {
     this.header = header;
     this.data = data;
+    this.compareViaIntlCollarator = compareViaIntlCollarator;
     this.render();
   }
 
@@ -20,8 +22,8 @@ export default class SortableTable {
     return ''
   }
 
-  getSortableHeader() { // this.header - вынести в сигнатуру метода?
-    const result = this.header.map(({ id, title, sortable, template, sortType }) => {
+  getSortableHeader(header = []) {
+    const result = header.map(({ id, title, sortable, template, sortType }) => {
       return `
               <div class="sortable-table__cell" data-id="${id}" data-sortable="${sortable}" data-sort-type="${sortType}" data-order="asc">
                 <span>${title}</span>
@@ -37,10 +39,9 @@ export default class SortableTable {
           `
   }
 
-  getSortableTableBody(sortField = 'title', orderValue = 'asc') { //this.data - вынести в сигнатуру метода?
-    const result = this.sortDataByParam(this.data, sortField, orderValue) // title - by default
-      .map(({ id, title, description, quantity, subcategory, status, images, price, discount, sales }) => {
-        return `
+  getSortableTableBody(data = []) {
+    const result = data.map(({ title, quantity, images, price, sales }) => {
+      return `
             <a href="${images?.[0]?.url}" class="sortable-table__row">
               <div class="sortable-table__cell">
                 <img class="sortable-table-image" alt="Image" src="${images?.[0]?.url}">
@@ -52,7 +53,7 @@ export default class SortableTable {
               <div class="sortable-table__cell">${sales}</div>
             </a>
             `
-      }).join('');
+    }).join('');
 
     return result;
   }
@@ -61,11 +62,9 @@ export default class SortableTable {
     return `
         <div data-element="productsContainer" class="products-list__container">
         <div class="sortable-table">
-      
-          ${this.getSortableHeader()}
-      
+          ${this.getSortableHeader(this.header)}
           <div data-element="body" class="sortable-table__body">
-            ${this.getSortableTableBody()}
+            ${this.getSortableTableBody(this.data)}
           </div>
       
           <div data-element="loading" class="loading-line sortable-table__loading-line"></div>
@@ -82,39 +81,74 @@ export default class SortableTable {
         `
   }
 
-  sortDataByParam(arrOfObjects, sortField, orderValue) {
-
-    function compareObjects(a, b, sortField, orderValue) {
-      const direction = orderValue === 'asc' ? 1 : -1;
-      const comparedFieldA = a[sortField];
-      const comparedFieldB = b[sortField];
-
-      let comparison = 0;
-
-      if (comparedFieldA > comparedFieldB) {
-        comparison = 1;
-      } else if (comparedFieldA < comparedFieldB) {
-        comparison = -1;
-      }
-      return comparison * direction;
-    }
-
-    return arrOfObjects.sort((a, b) => compareObjects(a, b, sortField, orderValue));
-  }
-
-  sort(sortField, orderValue) {
-    const updatedTableBody = this.getSortableTableBody(sortField, orderValue);
-    this.sortableTableBody.innerHTML = updatedTableBody;
-  }
-
   render() {
     const tempWrapper = document.createElement('div');
     tempWrapper.innerHTML = this.template;
     this.element = tempWrapper.firstElementChild;
 
-    this.sortableTableBody = this.element.querySelector('[data-element="body"]'); //TODO  Вынести data-elemetns
+    this.sortableTableBody = this.element.querySelector('[data-element="body"]'); //Одного data-elemeta достаточно
   }
 
+  sort(sortField, direction) {
+    const sortedData = this.sortDataByParam(this.data, sortField, direction); // sort data
 
+    const updatedTableBody = this.getSortableTableBody(sortedData);
+    this.sortableTableBody.innerHTML = updatedTableBody;
+  }
+
+  remove() {
+    this.element.remove();
+  }
+
+  destroy() {
+    this.remove();
+  }
+
+  /**
+   * Sorting array of objects
+   * @returns sorted array of objects
+   */
+  sortDataByParam(arrOfObjects = [], sortField, sortDirection) {
+    return arrOfObjects.sort((a, b) => this.compareObjects(a, b, sortField, sortDirection));
+  }
+
+  compareObjects(a, b, sortField, sortDirection) {
+    let compareResult = 0;
+    const fieldA = a[sortField];
+    const fieldB = b[sortField];
+
+    const direction = sortDirection === 'asc' ? 1 : sortDirection === 'desc' ? -1 : '' //* Вычисляем коэффициент направления сортировки
+
+    if (typeof fieldA === 'string') {
+      compareResult = this.compareViaIntlCollarator(fieldA, fieldB, ['ru', 'en'], direction);
+    }
+    if (typeof fieldB === 'number') {
+      compareResult = compareNumber(fieldA, fieldB, direction);
+    }
+
+    return compareResult;
+
+    // local function
+    function compareNumber(a, b, direction) {
+      let result = 0;
+
+      result = a > b ? direction * 1 : direction * -1;
+      return result;
+    }
+  }
+
+  /**
+  * Return array of uniq fields in this.header
+  */
+  getHeaderUniqFields() {
+    const uniqFields = [];
+
+    this.header.forEach(object => {
+      Object.keys(object).forEach(key => {
+        !result.includes(key) ? result.push(key) : ''
+      })
+    })
+
+    return uniqFields;
+  }
 }
-

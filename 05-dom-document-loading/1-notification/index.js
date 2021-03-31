@@ -1,26 +1,21 @@
 export default class NotificationMessage {
 
-    static instance;
+    static prevNotificationMessage;
 
     constructor(
         message = '',
-        {
-            duration = '',
-            type = ''
-        } = {}
+        data = {}
     ) {
-        if (NotificationMessage.instance) {
-            return NotificationMessage.instance;
-        }
-        NotificationMessage.instance = this;
         this.message = message;
-        this.duration = duration;
-        this.type = type;
+        this.duration = data.duration;
+        this.type = data.type;
+
+        this.render(); //FIXME Мб лучше в метод show()?
     }
 
     get template() {
         return `
-        <div class="notification ${this.type}" style="--value:${this.duration / 1000}s">
+        <div class="notification ${this.type}" style="--value:${this.convertMsToSec(this.duration)}s">
             <div class="timer"></div>
             <div class="inner-wrapper">
                 <div class="notification-header">${this.type}</div>
@@ -32,21 +27,32 @@ export default class NotificationMessage {
         `
     }
 
+    convertMsToSec(time) {
+        return (time / 1000);
+    }
+
     render() {
+        this.removePrevNotification();
+
         const element = document.createElement('div');
         element.innerHTML = this.template;
         this.element = element.firstElementChild;
 
-        document.body.append(this.element);
+        NotificationMessage.prevNotificationMessage = this.element; //FIXME Нарушает семантику метода
     }
 
-    show() {
-        if (!this.element) {
-            this.render();
-            setTimeout(() => {
-                this.destroy();
-            }, this.duration)
+    removePrevNotification() {
+        if (NotificationMessage.prevNotificationMessage) {
+            NotificationMessage.prevNotificationMessage.remove();
         }
+    }
+
+    show(container = document.body) {
+        // this.render();
+        container.append(this.element);
+        setTimeout(() => {
+            this.destroy();
+        }, this.duration)
     }
 
     remove() {
@@ -55,6 +61,6 @@ export default class NotificationMessage {
 
     destroy() {
         this.remove();
-        NotificationMessage.instance = null;
+        NotificationMessage.prevNotificationMessage = null;
     }
 }
