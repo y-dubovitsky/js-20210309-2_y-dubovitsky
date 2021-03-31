@@ -12,14 +12,14 @@ export default class SortableTable {
   }
 
   getSortArrow(sortable) {
-    if (sortable) {
-      return `
-              <span data-element="arrow" class="sortable-table__sort-arrow">
-                <span class="sort-arrow"></span>
-              </span>
-            `
-    }
-    return ''
+    return sortable ?
+      `
+        <span data-element="arrow" class="sortable-table__sort-arrow">
+          <span class="sort-arrow"></span>
+        </span>
+      `
+      : 
+      ''
   }
 
   getSortableHeader(header = []) {
