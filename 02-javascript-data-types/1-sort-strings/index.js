@@ -28,7 +28,7 @@ export function sortStrings(arr, param = 'asc') {
     return result;
 }
 
-function compareViaIntlCollarator(a, b, locales, direction = 1) {
+export function compareViaIntlCollarator(a, b, locales, direction = 1) {
     const collator = new Intl.Collator(
         [
             ...locales

@@ -29,6 +29,7 @@
 <script type="module">
   import SortableTable from './index.js';
   import data from './products-data.js';
+  import {compareViaIntlCollarator} from '../../02-javascript-data-types/1-sort-strings/index.js';
 
   const header = [
     {
@@ -69,7 +70,7 @@
     },
   ];
 
-  const sortableTable = new SortableTable(header, { data });
+  const sortableTable = new SortableTable(header, { data }, compareViaIntlCollarator);
 
   root.append(sortableTable.element);
 
