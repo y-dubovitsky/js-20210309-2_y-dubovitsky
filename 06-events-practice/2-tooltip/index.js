@@ -11,25 +11,39 @@ class Tooltip {
         return `<div class="tooltip">${this.message}</div>`
     }
 
-    render() {
+    render(x, y) {
         const element = document.createElement('div');
         element.innerHTML = this.getTemplate();
-        this.element = element;
-        document.body.appendChild(this.element);
+        this.element = element.firstChild;
+
+        this.setCoordinate(this.element, x, y);
+
+        document.body.append(this.element);
+    }
+
+    setCoordinate(element, x, y) {
+        element.style.left = x + 'px';
+        element.style.top = y + 'px';
     }
 
     show(event) {
         switch(event.target) {
             case this.foo : {
                 this.message = "foo"; //FIXME Убрать статику
-                this.render();
+                this.render(event.offsetX, event.offsetY);
                 break;
             }
             case this.bar : {
                 this.message = "bar-bar-bar"
-                this.render();
+                this.render(event.offsetX, event.offsetY);
                 break;
             }
+        }
+    }
+
+    removeTip(event) {
+        if(event.target === this.foo || event.target === this.bar) {
+            this.remove();
         }
     }
 
@@ -38,7 +52,7 @@ class Tooltip {
         this.bar = document.querySelector('div[data-tooltip="bar-bar-bar"]');
 
         document.addEventListener('pointerover', this.refShow = function(event) {Tooltip._instance.show(event)})
-        this.foo.addEventListener('pointerout', () => this.remove());
+        document.addEventListener('pointerout', this.refRemove = function(event) {Tooltip._instance.removeTip(event)});
     }
 
     remove() {
