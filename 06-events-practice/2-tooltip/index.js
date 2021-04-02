@@ -18,21 +18,15 @@ class Tooltip {
         document.body.appendChild(this.element);
     }
 
-    addToolTip = (element) => {
-        this.message = element.getAttribute('data-tooltip');
-        this.render();
-    }
-
-    showTooltip(event) {
-        switch (event.target.dataset.tooltip) {
-            case "bar-bar-bar": {
-                this.message = "bar-bar-bar";
+    show(event) {
+        switch(event.target) {
+            case this.foo : {
+                this.message = "foo"; //FIXME Убрать статику
                 this.render();
-                event.stopPropagation();
                 break;
             }
-            case "foo": {
-                this.message = "foo";
+            case this.bar : {
+                this.message = "bar-bar-bar"
                 this.render();
                 break;
             }
@@ -40,21 +34,17 @@ class Tooltip {
     }
 
     initialize() {
-        const dataToolTips = document.querySelectorAll('[data-tooltip]');
+        this.foo = document.querySelector('div[data-tooltip="foo"]');
+        this.bar = document.querySelector('div[data-tooltip="bar-bar-bar"]');
 
-        dataToolTips.forEach(tip => {
-            tip.addEventListener('pointerover', event => {
-                this.showTooltip(event);
-            })
-            tip.addEventListener('pointerout', () => {
-                this.remove();
-            })
-        })
+        document.addEventListener('pointerover', this.refShow = function(event) {Tooltip._instance.show(event)})
+        this.foo.addEventListener('pointerout', () => this.remove());
     }
 
     remove() {
         this.element.remove();
     }
+
 }
 
 const tooltip = new Tooltip();
