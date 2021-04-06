@@ -4,7 +4,7 @@
  * @param {string} [param='asc'] param - the sorting type 'asc' or 'desc'
  * @returns {string[]}
  */
-export function sortStrings(arr, param = 'asc') {
+export default function sortStrings(arr, param = 'asc') {
     let result = new Array(...arr);
 
     switch(param) {
