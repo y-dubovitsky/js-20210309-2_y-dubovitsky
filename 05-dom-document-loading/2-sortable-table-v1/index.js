@@ -3,105 +3,101 @@ export default class SortableTable {
   constructor(
     header = [],
     { data } = [],
-    compareViaIntlCollarator = {}
   ) {
     this.header = header;
     this.data = data;
-    this.compareViaIntlCollarator = compareViaIntlCollarator;
     this.render();
   }
 
-  getSortArrow(sortable) {
-    return sortable ?
-      `
-        <span data-element="arrow" class="sortable-table__sort-arrow">
-          <span class="sort-arrow"></span>
-        </span>
-      `
-      : 
-      ''
-  }
-
-  getSortableHeader(header = []) {
-    const result = header.map(({ id, title, sortable, template, sortType }) => {
-      return `
-              <div class="sortable-table__cell" data-id="${id}" data-sortable="${sortable}" data-sort-type="${sortType}" data-order="asc">
-                <span>${title}</span>
-                ${this.getSortArrow(sortable)}
-              </div>
-              `
-    }).join('');
-
+  // Header
+  getTableHeader(header) {
     return `
-            <div data-element="header" class="sortable-table__header sortable-table__row">
-              ${result}
+          <div data-element="header" class="sortable-table__header sortable-table__row">
+            ${header.map(item => getHeaderCell(item)).join('')}
+          </div>
+            `
+
+    function getHeaderCell({ id, title, sortable }) {
+      return `
+            <div class="sortable-table__cell" data-id="${id}" data-name="${title}" data-sortable="${sortable}">
+            <span>${title}</span>
+            ${sortable ?
+          `<span data-element="arrow" class="sortable-table__sort-arrow">
+                <span class="sort-arrow"></span>
+              </span>`
+          : ''
+        }
             </div>
-          `
+            `
+    }
   }
 
-  getSortableTableBody(data = []) {
-    const result = data.map(({ title, quantity, images, price, sales }) => {
-      return `
-            <a href="${images?.[0]?.url}" class="sortable-table__row">
-              <div class="sortable-table__cell">
-                <img class="sortable-table-image" alt="Image" src="${images?.[0]?.url}">
-              </div>
-              <div class="sortable-table__cell">${title}</div>
+  // TableBody
+  getTableBody(data, header = this.header) {
+    return  `
+              ${data.map(element => getTableRow(element, header)).join('')}
+            `
 
-              <div class="sortable-table__cell">${quantity}</div>
-              <div class="sortable-table__cell">${price}</div>
-              <div class="sortable-table__cell">${sales}</div>
+    function getTableRow(element, header) {
+      return `
+            <a href="/products/${element.id}" class="sortable-table__row">
+              ${header.map(head => {
+                return head.template ? head.template(element.images) //FIXME ПЛОХО! element.images! 
+                :
+                `<div class="sortable-table__cell">${element[head.id]}</div>`
+              }).join('')}
             </a>
             `
-    }).join('');
-
-    return result;
+    }
   }
 
-  get template() {
+  // Template
+  getTemplate() {
     return `
-        <div data-element="productsContainer" class="products-list__container">
-        <div class="sortable-table">
-          ${this.getSortableHeader(this.header)}
-          <div data-element="body" class="sortable-table__body">
-            ${this.getSortableTableBody(this.data)}
-          </div>
-      
-          <div data-element="loading" class="loading-line sortable-table__loading-line"></div>
-      
-          <div data-element="emptyPlaceholder" class="sortable-table__empty-placeholder">
-            <div>
-              <p>No products satisfies your filter criteria</p>
-              <button type="button" class="button-primary-outline">Reset all filters</button>
-            </div>
-          </div>
-      
+    <div data-element="productsContainer" class="products-list__container">
+      <div class="sortable-table">
+        ${this.getTableHeader(this.header)}
+        <div data-element="body" class="sortable-table__body">
+          ${this.getTableBody(this.data, this.header)}
         </div>
       </div>
-        `
+    </div>
+    `
   }
 
   render() {
     const tempWrapper = document.createElement('div');
-    tempWrapper.innerHTML = this.template;
+    tempWrapper.innerHTML = this.getTemplate();
     this.element = tempWrapper.firstElementChild;
 
-    this.sortableTableBody = this.element.querySelector('[data-element="body"]'); //Одного data-elemeta достаточно
+    this.subElements = this.getSubElements(this.element);
+  }
+
+  // Get all data-elements from DOM element
+  getSubElements(element) {
+    const result = {};
+    const elements = element.querySelectorAll('[data-element]');
+
+    for (const subElement of elements) {
+      const name = subElement.dataset.element;
+
+      result[name] = subElement;
+    }
+
+    return result;
   }
 
   sort(sortField, direction) {
     const sortedData = this.sortDataByParam(this.data, sortField, direction); // sort data
 
-    const updatedTableBody = this.getSortableTableBody(sortedData);
+    const updatedTableBody = this.getTableBody(sortedData);
+    this.sortableTableBody = this.subElements['body'];
     this.sortableTableBody.innerHTML = updatedTableBody;
   }
 
-  remove() {
-    this.element.remove();
-  }
-
   destroy() {
-    this.remove();
+    this.element.remove();
+    this.subElements = {};
   }
 
   /**
@@ -120,7 +116,7 @@ export default class SortableTable {
     const direction = sortDirection === 'asc' ? 1 : sortDirection === 'desc' ? -1 : '' //* Вычисляем коэффициент направления сортировки
 
     if (typeof fieldA === 'string') {
-      compareResult = this.compareViaIntlCollarator(fieldA, fieldB, ['ru', 'en'], direction);
+      compareResult = compareString(fieldA, fieldB, ['ru', 'en'], direction);
     }
     if (typeof fieldB === 'number') {
       compareResult = compareNumber(fieldA, fieldB, direction);
@@ -135,20 +131,9 @@ export default class SortableTable {
       result = a > b ? direction * 1 : direction * -1;
       return result;
     }
-  }
 
-  /**
-  * Return array of uniq fields in this.header
-  */
-  getHeaderUniqFields() {
-    const uniqFields = [];
-
-    this.header.forEach(object => {
-      Object.keys(object).forEach(key => {
-        !result.includes(key) ? result.push(key) : ''
-      })
-    })
-
-    return uniqFields;
+    function compareString(a, b, locales, direction) {
+      return direction * a.localeCompare(b, [...locales], { sensitivity: 'variant', caseFirst: 'upper' });
+    }
   }
 }
