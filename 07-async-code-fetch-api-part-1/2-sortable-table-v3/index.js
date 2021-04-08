@@ -234,3 +234,4 @@ export default class SortableTable {
     return result;
   }
 }
+

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>ColumnChart</title>
-    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" href="style.css"/>
   </head>
 
   <body>
@@ -21,7 +21,8 @@
     <script type="module">
       import ColumnChart from './index.js';
 
-      const ordersChart = new ColumnChart({
+      document.addEventListener("DOMContentLoaded", () => {
+        const ordersChart = new ColumnChart({
         url: 'api/dashboard/orders',
         range: {
           from: new Date('2020-04-06'),
@@ -58,6 +59,8 @@
       orders.append(ordersChart.element);
       sales.append(salesChart.element);
       customers.append(customersChart.element);
+      })
+      
     </script>
   </body>
 </html>
