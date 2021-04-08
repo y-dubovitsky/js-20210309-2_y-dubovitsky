@@ -12,6 +12,7 @@ export default class SortableTable {
     this.url = url;
     this.data = [];
     this.isLoading = false;
+    this.isSortLocally = false;
     this.searchParams = {
       _embed: 'subcategory.category',
       _sort: 'title',
@@ -41,23 +42,26 @@ export default class SortableTable {
     Object.assign(this.searchParams, newParams);
   }
 
-  showLoader() {
+  toggleLoader() {
     const loader = this.subElements.loader;
     this.isLoading ? loader.style.visibility = "hidden" : loader.style.visibility = "";
   }
 
   async loadData() {
     const result = await fetchJson(this.getUrl(this.searchParams));
+    if (!result || result.lenght === 0) {
+      alert('Wrong Url Request')
+    }
     this.data = this.data.concat(result); //FIXME Не делать так?
   }
 
   async update() {
-    this.showLoader();
+    this.toggleLoader();
     await this.loadData();
     const body = this.subElements.body;
     body.innerHTML = this.getTableBody(this.data, this.header);
     this.changeLoadingState();
-    this.showLoader();
+    this.toggleLoader();
   }
 
   // Header
@@ -138,11 +142,16 @@ export default class SortableTable {
 
     if (headerCell) {
       changeOrder(headerCell); // Меняем порядок сортировки
+
       this.changeSearchParams( // Меняем параметр сорировки в строке запроса
         { _sort: headerCell.dataset.id }
       );
 
-      this.sort(headerCell.dataset.id, headerCell.dataset.order);
+      if (this.isSortLocally) {
+        this.sortLocaly(headerCell.dataset.id, headerCell.dataset.order);
+      } else {
+        this.sortOnServer(headerCell.dataset.id, headerCell.dataset.order);
+      }
     }
 
     function changeOrder(headerCell) {
@@ -157,20 +166,33 @@ export default class SortableTable {
   onScrollDownLoadData = () => {
     if (document.documentElement.scrollHeight < 3 / 2 * window.pageYOffset + document.documentElement.clientHeight && this.isLoading) {
       this.changeLoadingState();
+
       this.changeSearchParams({
         _start: this.searchParams._end,
         _end: this.searchParams._end + 30
       });
+
       this.update();
     }
   }
 
-  sort(sortField, direction) {
+  sortLocaly(sortField, direction) {
     const sortedData = this.sortDataByParam(this.data, sortField, direction); // sort data
 
     const updatedTableBody = this.getTableBody(sortedData);
     this.sortableTableBody = this.subElements['body'];
     this.sortableTableBody.innerHTML = updatedTableBody;
+  }
+
+  sortOnServer(sortField, direction) {
+    this.changeSearchParams({
+      _sort: sortField,
+      _order: direction,
+      _start: 0, //FIXME Тут оставить захардкоженные значения?
+      _end: 30
+    })
+    this.changeLoadingState();
+    this.update();
   }
 
   remove() {
