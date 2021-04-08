@@ -1,62 +1,72 @@
 class Tooltip {
 
+    static instance;
+    static offset = 20;
+
     constructor() {
-        if (!Tooltip._instance) {
-            Tooltip._instance = this;
+        if (!Tooltip.instance) {
+            Tooltip.instance = this;
         }
-        return Tooltip._instance;
+        return Tooltip.instance;
     }
 
     getTemplate() {
         return `<div class="tooltip">${this.message}</div>`
     }
 
-    render(x, y) {
-        const element = document.createElement('div');
-        element.innerHTML = this.getTemplate();
-        this.element = element.firstChild;
-
-        this.setCoordinate(this.element, x, y);
+    render() {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = this.getTemplate();
+        this.element = wrapper.firstChild;
 
         document.body.append(this.element);
     }
 
-    setCoordinate(element, x, y) {
-        element.style.left = x + 'px';
-        element.style.top = y + 'px';
-    }
+    onPointerOver = (event) => {
+        const target = event.target.closest('[data-tooltip]');
 
-    show(event) {
-        switch(event.target) {
-            case this.foo : {
-                this.message = "foo"; //FIXME Убрать статику
-                this.render(event.offsetX, event.offsetY);
-                break;
-            }
-            case this.bar : {
-                this.message = "bar-bar-bar"
-                this.render(event.offsetX, event.offsetY);
-                break;
-            }
+        if (target) {
+            this.message = target.dataset.tooltip;
+            this.render();
+            document.addEventListener('pointermove', this.pointerMove)
         }
     }
 
-    removeTip(event) {
-        if(event.target === this.foo || event.target === this.bar) {
-            this.remove();
-        }
+    pointerMove = (event) => {
+        const { offsetX, offsetY } = event;
+        this.setCoordinate(offsetX, offsetY);
+    }
+
+    setCoordinate(x, y) {
+        this.element.style.left = x + Tooltip.offset + 'px';
+        this.element.style.top = y + Tooltip.offset + 'px';
+    }
+
+    onPointerOut = () => {
+        this.remove();
+    }
+
+    initEvents() {
+        document.addEventListener('pointerover', this.onPointerOver);
+        document.addEventListener('pointerout', this.onPointerOut);
     }
 
     initialize() {
-        this.foo = document.querySelector('div[data-tooltip="foo"]');
-        this.bar = document.querySelector('div[data-tooltip="bar-bar-bar"]');
-
-        document.addEventListener('pointerover', this.refShow = function(event) {Tooltip._instance.show(event)})
-        document.addEventListener('pointerout', this.refRemove = function(event) {Tooltip._instance.removeTip(event)});
+        this.initEvents();
     }
 
     remove() {
-        this.element.remove();
+        if (this.element) { // Проверка, если вдруг елемент не был создан, а курсор выйдет за документ
+            this.element.remove();
+            // this.element = null;
+            document.removeEventListener('pointermove', this.pointerMove)
+        }
+    }
+
+    destroy() {
+        this.remove();
+        document.removeEventListener('pointerover', this.onPointerOver);
+        document.removeEventListener('pointerout', this.onPointerOut);
     }
 
 }
