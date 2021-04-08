@@ -1,4 +1,4 @@
-import ColumnChart from '../solution/index.js';
+import ColumnChart from '../1-column-chart/index.js';
 
 import ordersData from "./__mocks__/orders-data.js";
 
