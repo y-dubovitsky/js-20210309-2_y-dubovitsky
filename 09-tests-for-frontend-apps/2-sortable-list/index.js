@@ -12,6 +12,7 @@ export default class SortableList {
 
         this.items.forEach((element, index) => {
             element.setAttribute('data-element', `li-${index}`);
+            element.classList.add('dragable');
             ul.append(element)
         });
 
@@ -22,34 +23,47 @@ export default class SortableList {
     render() {
         this.getTemplate();
 
-        this.addEventListeners();
+        this.initEventListeners();
     }
 
-    addEventListeners() {
-        this.element.addEventListener('mousedown', (event) => {
-            const target = event.target.closest('[data-element]');
+    onMouseDown = (event) => {
+        this.target = event.target.closest('[data-element]');
 
-            if(target) {
-                target.style.position = 'absolute';
-                target.style.zIndex = 100;
-                document.body.append(target);
-                document.addEventListener('mousemove', this.moveElement(target))
-                // document.addEventListener('mouseup', this.stopElement());
-            }
-        })
+        if (this.target) {
+            //FIXME не гибко
+            this.shiftX = event.clientX - this.target.getBoundingClientRect().left; // Координаты клика мыши
+            this.shiftY = event.clientY - this.target.getBoundingClientRect().top;
 
+            this.target.style.position = 'absolute';
+            this.target.style.zIndex = 100;
+
+            this.element.replaceChild(getPlaceHolder(), this.target); // Заменяем элемент по которому кликнули на пустышку
+            document.addEventListener('pointermove', this.moveElement)
+        }
+
+        function getPlaceHolder() {
+            const blank = document.createElement('div');
+            blank.classList.add('dragable');
+            blank.style.opacity = 0.4;
+            
+            return blank;
+        }
     }
-    
-    moveElement = (target, event) => {
-        console.log(target)
-        target.style.left = event.pageX + 'px';
-        target.style.top = event.pageY + 'px';
-        // console.log(target.style.top);
+
+    onMouseUp = () => {
+        document.removeEventListener('pointermove', this.moveElement);
     }
 
-    // stopElement = () => {
-    //     console.log('stop!')
-    //     document.removeEventListener('mousemove', this.moveElement(target, event))
-    // }
-    
+    moveElement = (event) => {
+        if (!this.element.contains(this.target)) {
+            this.element.append(this.target);
+        }
+        this.target.style.left = event.pageX - this.shiftX + 'px';
+        this.target.style.top = event.pageY - this.shiftY + 'px';
+    }
+
+    initEventListeners() {
+        document.addEventListener('mousedown', this.onMouseDown)
+        document.addEventListener('mouseup', this.onMouseUp)
+    }
 }

@@ -114,11 +114,19 @@ body {
 
 /* Custom style */
 
-#holder > ul > li {
-  margin: 1rem;
-  padding: 1rem;
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.dragable {
+  margin: 1rem 0;
+  height: 2rem;
+  width: 100%;
+  padding: 1rem 0;
   border: 1px solid gray;
   background-color: lightsteelblue;
+  list-style-type: none;
 }
 
 #holder > ul > li:hover {
