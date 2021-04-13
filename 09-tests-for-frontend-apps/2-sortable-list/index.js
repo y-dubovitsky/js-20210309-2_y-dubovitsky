@@ -78,13 +78,11 @@ export default class SortableList {
         const elementBelow = document.elementFromPoint(event.clientX, event.clientY);
         this.target.hidden = false;
         // Находим ближайший перетаскиваемый элемент
-        this.currentDragable = elementBelow.closest('.dragable'); // this.currentDragable - элемент, который мы двигаем в данный момент
+        this.currentDragable = elementBelow.closest('.dragable'); // this.currentDragable - элемент, НАД котормы мы находимся в ДАННЫЙ момент
 
         if (!this.currentDragable) return;
-        // Если НА ДАННЫЙ МОМЕНТ низлежащий элемент != тому элементу который мы перетаскиваем
-        if (elementBelow !== this.currentDragable) {
-            //TODO Добавить перемещение элементов из списка ul
-        }
+
+        this.swapElements(this.currentDragable);
     }
 
     initEventListeners = () => {
@@ -104,7 +102,7 @@ export default class SortableList {
         this.element.insertBefore(element, this.currentDragable);
     }
 
-    moveOutherElement = () => {
-        console.dir(this.currentDragable.getBoundingClientRect().top);
+    swapElements = (element) => { //FIXME BUG! Неправильное перемещение
+        element.before(this.blank);
     }
 }
