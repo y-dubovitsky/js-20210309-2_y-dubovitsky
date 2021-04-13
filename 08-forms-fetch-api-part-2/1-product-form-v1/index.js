@@ -25,9 +25,14 @@ export default class ProductForm {
     }
 
     this.getListCategory();
-    this.getProductDetails(this.productId);
+    if (this.mode === 'edit') {
+      this.getProductDetails(this.productId);
+    }
   }
 
+  /**
+   * Create url with param
+   */
   createUrl(api) {
     const url = new URL(api, BACKEND_URL);
 
@@ -39,6 +44,9 @@ export default class ProductForm {
     return url;
   }
 
+  /**
+   * Send request for categories data and execute method which update template with categories
+   */
   async getListCategory() {
     const url = '/api/rest/categories';
 
@@ -51,6 +59,9 @@ export default class ProductForm {
     this.updateCategories(response);
   }
 
+  /**
+   * Send request for product details and execute method which update template with product form
+   */
   async getProductDetails(id) {
     const url = '/api/rest/products';
 
@@ -58,20 +69,30 @@ export default class ProductForm {
       id: id
     })
 
-    const response = await fetchJson(this.createUrl(url));
-    this.updateProductDetails(response); // Обновляем данные на форме
-    this.sendProductForm(); // FIXME Навешиваем на кнопку обработчик
+    if (this.mode === 'edit') {
+      const response = await fetchJson(this.createUrl(url));
+      this.updateProductDetails(response); // Обновляем данные на форме
+    }
+    this.initEventListeners();
   }
 
+  /**
+   * Update html which categories
+   */
   updateCategories(categories) { // FIXME Сделать правильно отображение
-    const result = categories.map(({ id, title, subcategories }) => {
-      return `<option value="${id}"> ${title} > ${subcategories.map(({ title }) => title).join('')}</option>`
+    const result = categories.map(element => {
+      return element.subcategories.map(subElement => {
+        return `<option value="${subElement.id}">${element.title} &gt; ${subElement.title}</option>`
+      })
     }).join('');
 
     this.subElements.subcategory.innerHTML = result;
   }
 
-  updateProductDetails([{ id, title, description, price, discount, quantity, status }]) {
+  /**
+   * Update html with product details
+   */
+  updateProductDetails([{ title, description, price, discount, quantity, status }]) {
     this.subElements['product-name'].value = title;
     this.subElements['product-description'].value = description;
     this.subElements['product-price'].value = price;
@@ -80,23 +101,181 @@ export default class ProductForm {
     this.subElements['product-status'].value = status; //TODO Тут подумать!
   }
 
-  async sendProductForm() {
+  /**
+   * Adds new Image in imageListContainer
+   */
+  updateImageListContainer([{ link, fileName }]) {
+    const imageListContainer = this.subElements['imageListContainer'];
+
+    const liWrapper = document.createElement('div');
+    liWrapper.innerHTML = getImageListContainerLi(link, fileName);
+
+    const liElement = liWrapper.firstElementChild;
+    removeImageFromListContainer(liElement);
+
+    imageListContainer.ul.append(liElement);
+
+    // Utils functions below
+    function getImageListContainerLi() { //FIXME Не уверен что это хороший подход
+      return `
+              <li class="products-edit__imagelist-item sortable-list__item">
+                <input type="hidden" name="url" value="${link}">
+                <input type="hidden" name="source" value="${fileName}">
+                <span>
+                  <img src="/assets/icons/icon-grab.svg" data-grab-handle="" alt="grab">
+                  <img class="sortable-table__cell-img" alt="Image" src="${link}">
+                  <span>${fileName}</span>
+                </span>
+                <button type="button">
+                  <img src="/assets/icons/icon-trash.svg" data-delete-handle="" alt="delete">
+                </button>
+              </li>
+            `
+    }
+  
+    function removeImageFromListContainer(element) {
+      element.remove();
+    }
+  }
+
+
+  /**
+   * Send user images on the server and return array of images links.
+   */
+  uploadImagesOnServer() {
+    const result = []; // Массив объектов с информацией о файле
+
+    const img = document.createElement('input'); // Создаем элемент input с типом file
+    img.setAttribute('type', 'file');
+    img.click();
+
+    img.addEventListener('change', async () => {
+      let promiseArray = [];
+
+      // Перебираем все файлы, которые выбрал пользователь и по очереди отправялем на сервер
+      for (let i = 0; i < img.files.length; i++) {
+        promiseArray.push(await this.sendImageOnServer(img.files[i]));
+      }
+
+      Promise.all(promiseArray).then(links => listOfImagesUrl.push([...links]));
+    });
+
+    return result;
+  }
+
+  /**
+   * Sends user file on the server and return file info object {filenName, link}
+   */
+  async sendImageOnServer(file) {
+    const response = await fetchJson('https://api.imgur.com/3/image', {
+      method: 'POST',
+      headers: {
+        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+      },
+      body: file
+    });
+
+    return {
+      file: file.name,
+      link: await response.data.link //FIXME Нужен ли тут await? Вроде нет мы же ждем пока fetch не отработает
+    }
+  }
+
+  /**
+   * Return JSON from formData
+   */
+  getJsonFromProductForm() {
+    const formData = new FormData(this.subElements['productForm']);
+    const json = JSON.stringify(Object.fromEntries(formData));
+
+    return json;
+  }
+
+  /**
+   * Sends edited product details
+   */
+  async sendProductRequest() {
+    const reqBody = this.getJsonFromProductForm();
+    let options = {}
+
+    switch (this.mode) {
+      case 'edit': {
+        options = {
+          method: 'PATH',
+          headers: {
+            'Content-type': 'Application/json'
+          },
+          body: reqBody
+        }
+        break;
+      }
+      case 'create': {
+        options = {
+          method: 'PUT',
+          headers: {
+            'Content-type': 'Application/json'
+          },
+          body: reqBody
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+
+    try {
+      const result = await fetchJson(`${BACKEND_URL}/api/rest/products`,
+        options
+      );
+      this.dispatchEvent(result.id);
+    } catch (error) {
+      throw new Error('something gone wrong with error : ' + error);
+    }
+  }
+
+  dispatchEvent (id) {
+    
+    switch(this.mode) {
+      case 'edit' : {
+        new CustomEvent('product-updated', { detail: id })
+        break;
+      }
+      case 'create' : {
+        new CustomEvent('product-saved');
+        break
+      }
+    }
+
+    this.element.dispatchEvent(event);
+  }
+
+  /**
+   * Init event listeners
+   */
+  initEventListeners() {
     const productForm = this.subElements['productForm'];
-    const productFormData = new FormData(productForm);
+    const uploadImage = this.subElements['upload-image'];
 
-    productForm.onsubmit = async (e) => { // Обработчик навесили
-      e.preventDefault();
 
-      const response = await fetchJson('https://course-js.javascript.ru/api/rest/products', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        body: productFormData
-      });
+    productForm.addEventListener('submit', (event) => {
+      event.preventDefault(); // Убираем поведение по дефолту
+      this.sendProductRequest();
+    });
 
-      let result = await response.json();
-      console.log(result);
+    uploadImage.addEventListener('click', (event) => {
+      this.uploadImagesOnServer();
+    })
+  }
+
+  setButtonTextContent() {
+    switch (this.mode) {
+      case 'edit': {
+        return 'Сохранить товар'
+      }
+      case 'create': {
+        return 'Добавить товар'
+      }
     }
   }
 
@@ -116,26 +295,15 @@ export default class ProductForm {
               </div>
               <div class="form-group form-group__wide" data-element="sortable-list-container">
                 <label class="form-label">Фото</label>
-                <div data-element="imageListContainer"><ul class="sortable-list"><li class="products-edit__imagelist-item sortable-list__item" style="">
-                  <input type="hidden" name="url" value="https://i.imgur.com/MWorX2R.jpg">
-                  <input type="hidden" name="source" value="75462242_3746019958756848_838491213769211904_n.jpg">
-                  <span>
-                <img src="icon-grab.svg" data-grab-handle="" alt="grab">
-                <img class="sortable-table__cell-img" alt="Image" src="https://i.imgur.com/MWorX2R.jpg">
-                <span>75462242_3746019958756848_838491213769211904_n.jpg</span>
-              </span>
-                  <button type="button">
-                    <img src="icon-trash.svg" data-delete-handle="" alt="delete">
-                  </button></li></ul></div>
-                <button type="button" name="uploadImage" class="button-primary-outline"><span>Загрузить</span></button>
+                <div data-element="imageListContainer">
+                  <ul class="sortable-list">
+                  </ul>
+                </div>
+                <button type="button" data-element="upload-image" name="uploadImage" class="button-primary-outline"><span>Загрузить</span></button>
               </div>
               <div class="form-group form-group__half_left">
                 <label class="form-label">Категория</label>
                 <select data-element="subcategory" class="form-control" name="subcategory">
-                  <option value="ochki-virtualnoy-realnosti">ТВ и видеотехника &gt; Очки виртуальной реальности</option>
-                  <option value="proektsionnoe-oborudovanie">ТВ и видеотехника &gt; Проекционное оборудование</option>
-                  <option value="videokamery-i-aksessuary">ТВ и видеотехника &gt; Видеокамеры и аксессуары</option>
-                  <option value="dvd/blu-ray-pleery">ТВ и видеотехника &gt; DVD/Blu-ray плееры</option>
                 </select>
               </div>
               <div class="form-group form-group__half_left form-group__two-col">
@@ -161,7 +329,7 @@ export default class ProductForm {
               </div>
               <div class="form-buttons">
                 <button type="submit" name="save" class="button-primary-outline">
-                  Сохранить товар
+                  ${this.setButtonTextContent()}
                 </button>
               </div>
             </form>
@@ -185,5 +353,15 @@ export default class ProductForm {
     }
 
     return result;
+  }
+
+  destroy() {
+    this.remove();
+    this.element = null;
+    this.subElements = null;
+  }
+
+  remove() {
+    this.element.remove();
   }
 }
