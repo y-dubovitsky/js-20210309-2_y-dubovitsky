@@ -121,11 +121,9 @@ ul {
 
 .dragable {
   margin: 1rem 0;
-  height: 2rem;
   width: 100%;
-  padding: 1rem 0;
+  height: 1rem;
   border: 1px solid gray;
-  background-color: lightsteelblue;
   list-style-type: none;
 }
 
