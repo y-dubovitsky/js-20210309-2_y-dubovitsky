@@ -1,5 +1,5 @@
 export default class SortableList {
-    
+
     constructor(
         items = {}
     ) {
@@ -56,10 +56,13 @@ export default class SortableList {
 
     onMouseUp = () => {
         document.removeEventListener('pointermove', this.moveElement);
-        if (this.target !== null && this.currentDragable !== null) {
-            this.blank.remove(); // Удаляем пустышку, убираем абсолютное позиционирование, перемещаем элемент в ul
+        this.blank.remove(); // Удаляем пустышку, убираем абсолютное позиционирование, перемещаем элемент в ul
+
+        if (this.target && this.currentDragable) {
             this.setStyleDefault(this.target);
             this.insertElement(this.target);
+        } else {
+            this.element.removeChild(this.target); // Переместить на начальное место
         }
     }
 
@@ -99,5 +102,9 @@ export default class SortableList {
      */
     insertElement = (element) => {
         this.element.insertBefore(element, this.currentDragable);
+    }
+
+    moveOutherElement = () => {
+        console.dir(this.currentDragable.getBoundingClientRect().top);
     }
 }
