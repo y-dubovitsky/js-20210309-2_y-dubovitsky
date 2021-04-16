@@ -98,7 +98,6 @@ export default class RangePicker {
      */
     pickDate(event) {
         const cell = event.target.closest(".rangepicker__cell");
-        const dateGrid = this.subElements["date-grid"];
         const from = this.subElements["from"];
         const to = this.subElements["to"];
 
@@ -124,7 +123,7 @@ export default class RangePicker {
      */
     clearPickedDate(event) {
         const cell = event.target.closest(".rangepicker__cell");
-        
+        console.log(cell)
         if (!cell) {
             if (this.selectedDate) {
                 this.from = this.selectedDate;
@@ -171,16 +170,17 @@ export default class RangePicker {
 
 
     initEventListeners() {
-        const prevMonthBtn = this.subElements['control-left'];
-        const nextMonthBtn = this.subElements['control-right'];
-        const rangepicker = this.subElements['rangepicker'];
-        const dateGrid = this.subElements['date-grid'];
+        this.prevMonthBtn = this.subElements['control-left'];
+        this.nextMonthBtn = this.subElements['control-right'];
+        this.rangepicker = this.subElements['rangepicker'];
+        this.dateGrid = this.subElements['date-grid'];
 
-        prevMonthBtn.addEventListener('click', () => this.changeCalendarMonth('prev'));
-        nextMonthBtn.addEventListener('click', () => this.changeCalendarMonth('next'));
-        rangepicker.addEventListener('click', event => this.togglePickerVisible(event)); //FIXME Без => Пропадает контекст
-        dateGrid.addEventListener('click', event => this.pickDate(event));
-        document.addEventListener('click', event => this.clearPickedDate(event));
+        this.prevMonthBtn.addEventListener('click', this.changeCalendarMonth.bind(this, 'prev'));
+        this.nextMonthBtn.addEventListener('click', () => this.changeCalendarMonth('next'));
+        this.rangepicker.addEventListener('click', this.togglePickerVisible.bind(this, [event]));
+        this.dateGrid.addEventListener('click', this.pickDate.bind(this)); //!!!!! Use Bind (Prevent context lose)
+        
+        document.addEventListener('click', this.clearPickedDate);
     }
 
     // ------------------------ Destroy methods ------------------------
@@ -191,7 +191,7 @@ export default class RangePicker {
 
     destroy() {
         this.remove()
-        document.removeEventListener('click', event => this.clearPickedDate(event)); //FIXME Не удаляется!
+        document.removeEventListener('click', this.clearPickedDate); //FIXME Не удаляется!
     }
 
     // ------------------------ Utils functions below ------------------------
