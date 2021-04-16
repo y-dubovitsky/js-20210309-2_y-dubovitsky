@@ -224,8 +224,14 @@ export default class RangePicker {
   }
 
   getCountOfDaysInMonth(date) {
-    const prevMonth = new Date(+date.getFullYear(), +date.getMonth() - 1);
-    const countOfDays = (date - prevMonth) / 1000 / 60 / 60 / 24;
+
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    const currentMonth = new Date(year, month);
+    const nextMonth = new Date(year, month + 1);
+
+    const countOfDays = (nextMonth - currentMonth) / 1000 / 60 / 60 / 24;
 
     return {
       countOfDays: getDaysArray(countOfDays),
