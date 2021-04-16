@@ -188,13 +188,12 @@ export default class RangePicker {
     this.prevMonthBtn = this.subElements['control-left'];
     this.nextMonthBtn = this.subElements['control-right'];
     this.rangepicker = this.subElements['rangepicker'];
-    this.dateGrid = this.subElements['date-grid'];
 
     //! Обрати внимание на разные варианты задания listeners
     this.prevMonthBtn.addEventListener('click', this.changeCalendarMonth.bind(this, 'prev'));
     this.nextMonthBtn.addEventListener('click', () => this.changeCalendarMonth('next'));
     this.rangepicker.addEventListener('click', event => this.togglePickerVisible(event));
-    this.dateGrid.addEventListener('click', this.pickDate);
+    document.addEventListener('click', this.pickDate);
     document.addEventListener('click', this.clearPickedDate);
   }
 
@@ -206,7 +205,8 @@ export default class RangePicker {
 
   destroy() {
     this.remove();
-    document.removeEventListener('click', this.clearPickedDate); //FIXME Не удаляется!
+    document.removeEventListener('click', this.pickDate);
+    document.removeEventListener('click', this.clearPickedDate);
   }
 
   // ------------------------ Utils functions below ------------------------
