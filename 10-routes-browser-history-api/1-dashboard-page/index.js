@@ -14,6 +14,7 @@ export default class Page {
    */
   pageComponents;
   subElements;
+  element;
 
   /**
    * Create all components
@@ -93,12 +94,15 @@ export default class Page {
   render() {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = this.getTemplate();
+    this.element = wrapper.firstElementChild;
 
-    this.getSubElements(wrapper);
+    this.getSubElements(this.element);
     this.createComponents();
-    this.createPageContent(wrapper);
+    this.createPageContent(this.element);
     this.initEventListeners();
-    return wrapper.firstElementChild;
+
+
+    return this.element;
   }
 
   /**
@@ -131,6 +135,20 @@ export default class Page {
       accum[name] = current;
       return accum;
     }, {})
+  }
+
+  remove() {
+    this.element.remove();
+  }
+
+  destroy() {
+    this.remove();
+
+    for(let key in this.pageComponents) {
+      this.pageComponents[key].destroy;
+    }
+
+    this.pageComponents = null;
   }
 
 }
