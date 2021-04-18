@@ -145,7 +145,7 @@ export default class Page {
     this.remove();
 
     for(let key in this.pageComponents) {
-      this.pageComponents[key].destroy;
+      this.pageComponents[key].destroy();
     }
 
     this.pageComponents = null;
